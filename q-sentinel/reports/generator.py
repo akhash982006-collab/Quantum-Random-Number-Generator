@@ -32,7 +32,7 @@ def pdf(result,comparison=None):
     def table(headers,rows,widths):
         data=[[Paragraph(escape(str(v)),styles['BodyText']) for v in row] for row in [headers]+rows]
         t=Table(data,colWidths=widths,repeatRows=1,hAlign='LEFT'); t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#e7edfa')),('VALIGN',(0,0),(-1,-1),'TOP'),('BOTTOMPADDING',(0,0),(-1,-1),7),('LINEBELOW',(0,0),(-1,0),.7,colors.HexColor('#8095bd'))])); story.append(t)
-    p('Q-SENTINEL','Title'); p('QRNG Reliability & Forensic Health Passport','Heading2')
+    p('Q-GAURD','Title'); p('QRNG Reliability & Forensic Health Passport','Heading2')
     p(f"Session {result['session_id']} | {result['timestamp']}")
     heading('Executive summary'); p(result['advisor'])
     heading('Dataset and data quality'); p(result['metadata'].get('name','Dataset')); p(f"Source: {result['metadata'].get('source','unknown')}; analyzed bits: {result['metadata']['bits']:,}; complete windows: {result['data_quality']['complete_windows']}; excluded trailing bits: {result['data_quality']['trailing_bits']}.")
@@ -87,6 +87,6 @@ def pdf(result,comparison=None):
     p('Sources: https://csrc.nist.gov/pubs/sp/800/22/r1/upd1/final and https://csrc.nist.gov/pubs/sp/800/90/b/final')
     heading('Scientific Interpretation'); p(result['limitations'])
     def footer(canvas,doc):
-        canvas.setFont('Helvetica',8); canvas.setFillColor(colors.HexColor('#65738d')); canvas.drawString(42,25,'Q-SENTINEL | Statistical evidence, not quantum certification'); canvas.drawRightString(552,25,str(doc.page))
+        canvas.setFont('Helvetica',8); canvas.setFillColor(colors.HexColor('#65738d')); canvas.drawString(42,25,'Q-GAURD | Statistical evidence, not quantum certification'); canvas.drawRightString(552,25,str(doc.page))
     SimpleDocTemplate(output,pagesize=(595,842),rightMargin=45,leftMargin=45,topMargin=40,bottomMargin=45).build(story,onFirstPage=footer,onLaterPages=footer)
     return output.getvalue()

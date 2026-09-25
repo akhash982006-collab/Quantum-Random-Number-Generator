@@ -17,7 +17,7 @@ from ui.forensic_view import render as forensic
 from ui.inconsistency_explorer import render as inconsistency_explorer
 from reports.generator import pdf,export_json,export_csv
 
-st.set_page_config(page_title='Q-Sentinel | Reliability Intelligence',page_icon='◈',layout='wide')
+st.set_page_config(page_title='Q-Gaurd | Reliability Intelligence',page_icon='◈',layout='wide')
 NAV=['COMMAND CENTER','DATA INGESTION','INCONSISTENCY EXPLORER','ENTROPY ANALYSIS','NIST VALIDATION','DEGRADATION MONITOR','ENTROPY FORENSICS','FAILURE LAB','QRNG HEALTH PASSPORT','REPORTS']
 ss=st.session_state
 for key,value in dict(result=None,bits=None,job=None,reference=None,live=False,live_fault='Healthy',live_age=0,lab_seed=42,retention=False,weights=WEIGHTS.copy(),size=10000).items():
@@ -38,7 +38,7 @@ def demo(fault='Healthy'):
     launch(bits,'SIMULATED · '+('Healthy reference' if fault=='Healthy' else 'Guided degradation and collapse'),extra=meta)
 
 with st.sidebar:
-    st.markdown('## ◈ Q-SENTINEL'); st.caption('RELIABILITY • FORENSICS • EARLY WARNING')
+    st.markdown('## ◈ Q-GAURD'); st.caption('RELIABILITY • FORENSICS • EARLY WARNING')
     requested_page = ss.pop('nav_page', ss.get('workspace_page', NAV[0]))
     ss.workspace_page = requested_page if requested_page in NAV else NAV[0]
     page=st.radio('Workspace',NAV,key='workspace_page',label_visibility='collapsed')
@@ -265,9 +265,9 @@ else:
         selected=st.selectbox('Include historical comparison',ids)
         comparison=load(selected) if selected!='None' else None
         cols=st.columns(3)
-        cols[0].download_button('Download JSON',export_json(r),'q-sentinel-passport.json','application/json')
-        cols[1].download_button('Download window CSV',export_csv(r),'q-sentinel-windows.csv','text/csv')
-        cols[2].download_button('Download PDF report',pdf(r,comparison),'q-sentinel-report.pdf','application/pdf')
+        cols[0].download_button('Download JSON',export_json(r),'q-gaurd-passport.json','application/json')
+        cols[1].download_button('Download window CSV',export_csv(r),'q-gaurd-windows.csv','text/csv')
+        cols[2].download_button('Download PDF report',pdf(r,comparison),'q-gaurd-report.pdf','application/pdf')
         st.write(r['advisor']); st.json(dict(session=r['session_id'],configuration=r['config'],quality=r['data_quality'],elapsed_seconds=r['elapsed_seconds']))
         if ss.bits is not None:
             st.download_button('Download analyzed bits (.txt)',(''.join(map(str,ss.bits))).encode(),'analyzed-bits.txt','text/plain')

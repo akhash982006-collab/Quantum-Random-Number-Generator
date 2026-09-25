@@ -15,7 +15,7 @@ h1 {letter-spacing:-.035em} h2,h3 {color:#e3eafb}
 
 def header():
     st.markdown(CSS,unsafe_allow_html=True)
-    st.markdown('<div class="hero"><div class="eyebrow">Q-SENTINEL / RELIABILITY INTELLIGENCE</div><h1>QRNG Reliability Command Center</h1><p>Detect the change. Trace the evidence. Investigate with confidence.</p></div>',unsafe_allow_html=True)
+    st.markdown('<div class="hero"><div class="eyebrow">Q-GAURD / RELIABILITY INTELLIGENCE</div><h1>QRNG Reliability Command Center</h1><p>Detect the change. Trace the evidence. Investigate with confidence.</p></div>',unsafe_allow_html=True)
 
 def cards(result):
     rows=result['windows']; latest=rows[-1] if rows else {}

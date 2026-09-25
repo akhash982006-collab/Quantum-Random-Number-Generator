@@ -3,6 +3,7 @@ node_modules/
 **/node_modules/
 __pycache__/
 .pytest_cache/
+.pytest_temp/
 *.sqlite3
 q-sentinel/data/retained/
 q-sentinel/output/

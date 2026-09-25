@@ -1,4 +1,4 @@
-# Q-Sentinel
+# Q-Gaurd
 
 **Intelligent QRNG Reliability, Forensics & Early-Warning System**
 
