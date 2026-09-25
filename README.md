@@ -30,9 +30,10 @@ cd D:\PRO\kalasalingam\q-sentinel
 - Six NIST SP 800-22 families: Frequency, Block Frequency, Runs, Longest Run, DFT, and Cumulative Sums in both directions.
 - Windowed entropy, 8-bit patterns, signed bias, runs, dependence, spectral concentration and repetition.
 - Frozen-baseline CUSUM detection, persistent state transitions, explainable signatures, and conditional trend projections.
+- **Dedicated Inconsistency Explorer** providing unified event-level records, flagged-bit ranges, plain-language measurement formulas, and interactive binary/hex inspection.
 - Interactive streaming Failure Lab, configurable what-if scenarios, healthy/degraded comparison through saved passports, and exact bit/hex inspection.
 - Transparent health components, deterministic Q-Advisor explanations, local SQLite history, JSON/CSV/PDF exports, and opt-in raw-bit retention.
-- All eleven requested navigation pages; no placeholder pages or fake metrics.
+- Full multi-page navigation suite with scientific boundaries and clear physical-onset distinctions.
 
 ## Five-minute demonstration
 

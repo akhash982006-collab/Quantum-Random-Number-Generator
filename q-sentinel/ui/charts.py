@@ -8,7 +8,18 @@ def frame(result):
     return pd.DataFrame([{k:v for k,v in r.items() if k not in ['tests','signatures','components','z','forecast']} for r in result['windows']])
 
 def style(fig,title=None):
-    fig.update_layout(template='plotly_dark',title=title,paper_bgcolor='#101625',plot_bgcolor='#101625',font=dict(family='Inter, Segoe UI, sans-serif',color='#e0e8fa'),colorway=COLORS,margin=dict(l=25,r=25,t=50,b=35),legend=dict(orientation='h',y=1.12),hovermode='x unified')
+    title_dict = dict(text=title, x=0.01, y=0.98, xanchor='left', yanchor='top') if title else None
+    fig.update_layout(
+        template='plotly_dark',
+        title=title_dict,
+        paper_bgcolor='#101625',
+        plot_bgcolor='#101625',
+        font=dict(family='Inter, Segoe UI, sans-serif',color='#e0e8fa'),
+        colorway=COLORS,
+        margin=dict(l=25,r=25,t=75,b=35),
+        legend=dict(orientation='h',yanchor='bottom',y=1.02,xanchor='right',x=1.0),
+        hovermode='x unified'
+    )
     return fig
 
 def timeline(result,columns,title,limit=300):

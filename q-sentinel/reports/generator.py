@@ -53,6 +53,26 @@ def pdf(result,comparison=None):
     selected=sorted([e for e in result['events'] if e['kind']!='Change point'][:12]+[e for e in result['events'] if e['kind']=='Change point'][:8],key=lambda e:e['window'])
     table(['Window','Event','State'],[[e['window'],e['kind'],e['state']] for e in selected] or [['-','No detected events','-']],[70,220,180])
     if len(result['events'])>len(selected): p('State transitions and first eight change events shown, up to 20 records. Full event log is included in JSON export.')
+    
+    incons = result.get('inconsistencies', [])
+    inc_sum = result.get('inconsistency_summary', {})
+    if incons:
+        heading('Inconsistency Explorer Dossier')
+        table(['Metric', 'Summary Value'], [
+            ['Total Inconsistency Events', str(inc_sum.get('total_events', len(incons)))],
+            ['Unique Affected Windows', str(inc_sum.get('unique_affected_windows', 0))],
+            ['Total Flagged Bit Ranges', str(inc_sum.get('flagged_ranges_count', 0))],
+            ['First Detected Event', str(inc_sum.get('first_detected', 'None'))],
+            ['Primary Signature Type', str(inc_sum.get('most_common_type', 'None'))],
+            ['Highest Severity Level', str(inc_sum.get('highest_severity', 'Healthy'))]
+        ], [200, 270])
+        p('Normalized Inconsistency Records:')
+        inc_rows = []
+        for inc in incons[:10]:
+            w_span = f"W{inc['first_detected_window']}" if inc['affected_windows_count'] == 1 else f"W{inc['affected_windows'][0]}–W{inc['affected_windows'][-1]} ({inc['affected_windows_count']}w)"
+            inc_rows.append([inc['id'], inc['type'], inc['severity'], w_span, f"{inc['bit_start']:,}–{inc['bit_end']:,}"])
+        table(['ID', 'Type', 'Severity', 'Windows', 'Bit Range'], inc_rows, [60, 110, 80, 100, 120])
+        p('Measurement basis: Statistical metrics represent window-level inspection evidence; physical onset is unknown without external hardware telemetry.')
     story.append(PageBreak())
     heading('Risk assessment'); p(result['forecast']['reason'])
     if result['forecast']['available']: p(f"Conditional threshold crossing: {result['forecast']['windows_to_threshold']:.1f} windows. Trend slope: {result['forecast']['slope']:.4f} health points/window.")

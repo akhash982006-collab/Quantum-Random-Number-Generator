@@ -14,10 +14,11 @@ from simulation.qrng_twin import simulate,FAULTS,guided_demo
 from ui.components import header,cards
 from ui.charts import timeline,fingerprint,heatmap,pvalues,frame,style
 from ui.forensic_view import render as forensic
+from ui.inconsistency_explorer import render as inconsistency_explorer
 from reports.generator import pdf,export_json,export_csv
 
 st.set_page_config(page_title='Q-Sentinel | Reliability Intelligence',page_icon='◈',layout='wide')
-NAV=['COMMAND CENTER','DATA INGESTION','ENTROPY ANALYSIS','NIST VALIDATION','DEGRADATION MONITOR','ENTROPY FORENSICS','FAILURE LAB','WHAT-IF ANALYSIS','QRNG HEALTH PASSPORT','REPORTS','METHODOLOGY']
+NAV=['COMMAND CENTER','DATA INGESTION','INCONSISTENCY EXPLORER','ENTROPY ANALYSIS','NIST VALIDATION','DEGRADATION MONITOR','ENTROPY FORENSICS','FAILURE LAB','WHAT-IF ANALYSIS','QRNG HEALTH PASSPORT','REPORTS','METHODOLOGY']
 ss=st.session_state
 for key,value in dict(result=None,bits=None,job=None,reference=None,live=False,live_fault='Healthy',live_age=0,lab_seed=42,retention=False,weights=WEIGHTS.copy(),size=10000).items():
     if key not in ss: ss[key]=value
@@ -38,7 +39,8 @@ def demo(fault='Healthy'):
 
 with st.sidebar:
     st.markdown('## ◈ Q-SENTINEL'); st.caption('RELIABILITY • FORENSICS • EARLY WARNING')
-    page=st.radio('Workspace',NAV,label_visibility='collapsed')
+    default_idx = NAV.index(ss.pop('nav_page')) if 'nav_page' in ss and ss.get('nav_page') in NAV else 0
+    page=st.radio('Workspace',NAV,index=default_idx,label_visibility='collapsed')
     st.divider()
     if st.button('Load healthy demo',width='stretch'): demo()
     if st.button('Run guided degradation demo',width='stretch'): demo('Gradual degradation')
@@ -203,6 +205,21 @@ else:
     cards(r)
     if page=='COMMAND CENTER':
         st.caption(r['metadata'].get('name','Dataset')+' · '+r['baseline']['status'])
+        
+        # Compact Inconsistency Summary Section
+        inc_summary = r.get('inconsistency_summary', {})
+        st.markdown('### Inconsistency summary')
+        sc1, sc2, sc3, sc4, sc5 = st.columns(5)
+        sc1.metric('Events', f"{inc_summary.get('total_events', 0)} events")
+        sc2.metric('Affected Windows', f"{inc_summary.get('unique_affected_windows', 0)} windows")
+        sc3.metric('First Detected', str(inc_summary.get('first_detected', 'None')))
+        sc4.metric('Primary Signature', str(inc_summary.get('most_common_type', 'None')))
+        sc5.metric('Highest Severity', str(inc_summary.get('highest_severity', 'Healthy')))
+        if st.button('Open Inconsistency Explorer →', type='secondary'):
+            ss.nav_page = 'INCONSISTENCY EXPLORER'
+            st.rerun()
+            
+        st.divider()
         left,right=st.columns([2,1])
         with left:
             st.plotly_chart(timeline(r,['health'],'Operational health / 100'),width='stretch')
@@ -211,6 +228,7 @@ else:
             st.subheader('Q-Advisor'); st.info(r['advisor'])
             st.plotly_chart(fingerprint(r),width='stretch')
         st.subheader('Recent events'); st.dataframe(pd.DataFrame(r['events'][-20:]).drop(columns=['evidence','standardized_changes'],errors='ignore'),hide_index=True,width='stretch')
+    elif page=='INCONSISTENCY EXPLORER': inconsistency_explorer(r, ss.bits)
     elif page=='ENTROPY ANALYSIS':
         st.plotly_chart(timeline(r,['shannon','min_entropy','collision','block_entropy'],'Entropy estimates · bits/bit'),width='stretch')
         st.plotly_chart(fingerprint(r),width='stretch')

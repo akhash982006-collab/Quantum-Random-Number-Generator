@@ -10,6 +10,8 @@ from core.health_score import WEIGHTS
 from core.diagnostics import advisor
 from nist.suite import suite,summary
 
+from core.inconsistencies import extract_inconsistencies
+
 VERSION='1.0.0'
 LIMITATION='This analysis evaluates statistical and entropy characteristics of the supplied bitstream. It does not independently establish that the source is quantum. Marginal entropy is not certified usable cryptographic entropy. Signature scores are not probabilities of hardware failure.'
 
@@ -38,7 +40,17 @@ def analyze(bits,metadata=None,size=10000,weights=None,reference=None,progress=N
     events,baseline,prediction=monitor(rows,size,calibration,weights,reference_rows)
     if cancel and cancel.is_set(): raise InterruptedError('Analysis stopped.')
     whole=suite(bits)
-    result=dict(session_id=str(uuid.uuid4()),timestamp=datetime.now(timezone.utc).isoformat(),version=VERSION,metadata=dict(metadata or {},bits=len(bits),sha256=digest(bits)),config=dict(window_size=size,alpha=.01,weights=weights,reference_hash=digest(reference) if reference is not None else None),data_quality=dict(complete_windows=total,trailing_bits=len(bits)%size,bit_order='MSB first',validation='Strict binary input validated'),overall=metrics(bits),nist=whole,nist_summary=summary(whole),windows=rows,events=events,baseline=baseline,calibration=calibration,forecast=prediction,limitations=LIMITATION)
+    sid=str(uuid.uuid4())
+    ts=datetime.now(timezone.utc).isoformat()
+    inconsistencies,inconsistency_summary=extract_inconsistencies(rows,events,baseline,calibration,sid,ts,size,bits)
+    # Tag each window with inconsistency ID if present
+    inc_map = {}
+    for inc in inconsistencies:
+        for w in inc['affected_windows']:
+            inc_map[w] = inc['id']
+    for r in rows:
+        r['inconsistency_id'] = inc_map.get(r['window'], None)
+    result=dict(session_id=sid,timestamp=ts,version=VERSION,metadata=dict(metadata or {},bits=len(bits),sha256=digest(bits)),config=dict(window_size=size,alpha=.01,weights=weights,reference_hash=digest(reference) if reference is not None else None),data_quality=dict(complete_windows=total,trailing_bits=len(bits)%size,bit_order='MSB first',validation='Strict binary input validated'),overall=metrics(bits),nist=whole,nist_summary=summary(whole),windows=rows,events=events,baseline=baseline,calibration=calibration,forecast=prediction,inconsistencies=inconsistencies,inconsistency_summary=inconsistency_summary,limitations=LIMITATION)
     result['advisor']=advisor(rows[-1] if rows else None,baseline,events)
     result['elapsed_seconds']=time.perf_counter()-started
     if progress: progress(1.,'Complete')
