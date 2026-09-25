@@ -5,7 +5,7 @@ from streamlit.testing.v1 import AppTest
 from core.engine import analyze
 from simulation.qrng_twin import simulate
 
-PAGES=['COMMAND CENTER','DATA INGESTION','INCONSISTENCY EXPLORER','ENTROPY ANALYSIS','NIST VALIDATION','DEGRADATION MONITOR','ENTROPY FORENSICS','FAILURE LAB','WHAT-IF ANALYSIS','QRNG HEALTH PASSPORT','REPORTS','METHODOLOGY']
+PAGES=['COMMAND CENTER','DATA INGESTION','INCONSISTENCY EXPLORER','ENTROPY ANALYSIS','NIST VALIDATION','DEGRADATION MONITOR','ENTROPY FORENSICS','FAILURE LAB','QRNG HEALTH PASSPORT','REPORTS']
 
 @pytest.fixture(scope='module')
 def payload():
@@ -52,7 +52,7 @@ def test_settings_reset(payload):
     button(at,'Apply settings / reset baseline').click().run()
     assert at.session_state['size']==1000 and at.session_state['result'] is None
 
-def test_what_if_and_passport(payload,tmp_path,monkeypatch):
+def test_scenario_and_passport(payload,tmp_path,monkeypatch):
     # Keep UI persistence isolated from the user's saved sessions.
     import core.persistence as persistence
     original_save=persistence.save; original_sessions=persistence.sessions; original_load=persistence.load
@@ -62,7 +62,7 @@ def test_what_if_and_passport(payload,tmp_path,monkeypatch):
     monkeypatch.setattr(persistence,'load',lambda i:original_load(i,db))
     at=AppTest.from_file(str(Path(__file__).parents[1]/'app.py'),default_timeout=30)
     at.session_state['bits']=payload[0]; at.session_state['result']=payload[1]; at.run()
-    at.sidebar.radio[0].set_value('WHAT-IF ANALYSIS').run()
+    at.sidebar.radio[0].set_value('FAILURE LAB').run()
     button(at,'Run scenario').click().run(); finish(at)
     at.sidebar.radio[0].set_value('QRNG HEALTH PASSPORT').run()
     button(at,'Save current health passport').click().run()

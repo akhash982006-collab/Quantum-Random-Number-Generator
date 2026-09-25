@@ -18,7 +18,7 @@ from ui.inconsistency_explorer import render as inconsistency_explorer
 from reports.generator import pdf,export_json,export_csv
 
 st.set_page_config(page_title='Q-Sentinel | Reliability Intelligence',page_icon='◈',layout='wide')
-NAV=['COMMAND CENTER','DATA INGESTION','INCONSISTENCY EXPLORER','ENTROPY ANALYSIS','NIST VALIDATION','DEGRADATION MONITOR','ENTROPY FORENSICS','FAILURE LAB','WHAT-IF ANALYSIS','QRNG HEALTH PASSPORT','REPORTS','METHODOLOGY']
+NAV=['COMMAND CENTER','DATA INGESTION','INCONSISTENCY EXPLORER','ENTROPY ANALYSIS','NIST VALIDATION','DEGRADATION MONITOR','ENTROPY FORENSICS','FAILURE LAB','QRNG HEALTH PASSPORT','REPORTS']
 ss=st.session_state
 for key,value in dict(result=None,bits=None,job=None,reference=None,live=False,live_fault='Healthy',live_age=0,lab_seed=42,retention=False,weights=WEIGHTS.copy(),size=10000).items():
     if key not in ss: ss[key]=value
@@ -39,8 +39,9 @@ def demo(fault='Healthy'):
 
 with st.sidebar:
     st.markdown('## ◈ Q-SENTINEL'); st.caption('RELIABILITY • FORENSICS • EARLY WARNING')
-    default_idx = NAV.index(ss.pop('nav_page')) if 'nav_page' in ss and ss.get('nav_page') in NAV else 0
-    page=st.radio('Workspace',NAV,index=default_idx,label_visibility='collapsed')
+    requested_page = ss.pop('nav_page', ss.get('workspace_page', NAV[0]))
+    ss.workspace_page = requested_page if requested_page in NAV else NAV[0]
+    page=st.radio('Workspace',NAV,key='workspace_page',label_visibility='collapsed')
     st.divider()
     if st.button('Load healthy demo',width='stretch'): demo()
     if st.button('Run guided degradation demo',width='stretch'): demo('Gradual degradation')
