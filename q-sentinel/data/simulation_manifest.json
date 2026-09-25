@@ -1,0 +1,98 @@
+[
+  {
+    "file": "data\\healthy\\healthy_qrng.csv",
+    "label": "SIMULATED DATA",
+    "fault": "Healthy",
+    "seed": 42,
+    "windows": 100,
+    "window_size": 10000,
+    "start_window": 41,
+    "duration": 60,
+    "intensity": 0.2,
+    "sha256": "51d714bdbd042e7d48ded9610ecd64d847dc2da14b0bdddcd4b4c7c98dc587f3"
+  },
+  {
+    "file": "data\\degraded\\biased_qrng.csv",
+    "label": "SIMULATED DATA",
+    "fault": "Bias",
+    "seed": 42,
+    "windows": 100,
+    "window_size": 10000,
+    "start_window": 41,
+    "duration": 60,
+    "intensity": 0.2,
+    "sha256": "1d6b2398127c4cbaa4047206e5eca496eb9247ca7de288edef76d8f213460632"
+  },
+  {
+    "file": "data\\degraded\\correlated_qrng.csv",
+    "label": "SIMULATED DATA",
+    "fault": "Correlation",
+    "seed": 42,
+    "windows": 100,
+    "window_size": 10000,
+    "start_window": 41,
+    "duration": 60,
+    "intensity": 0.2,
+    "sha256": "af1ade8756807d34f8665ea9e4f25b294344fa34ee1e265b15a3666859ef0077"
+  },
+  {
+    "file": "data\\degraded\\periodic_qrng.csv",
+    "label": "SIMULATED DATA",
+    "fault": "Periodicity",
+    "seed": 42,
+    "windows": 100,
+    "window_size": 10000,
+    "start_window": 41,
+    "duration": 60,
+    "intensity": 0.2,
+    "sha256": "455f1522f4490b5e198c16c7ed4b08bc58c8cc3233baa6277fa5c97a8a8636d4"
+  },
+  {
+    "file": "data\\degraded\\burst_noise_qrng.csv",
+    "label": "SIMULATED DATA",
+    "fault": "Burst noise",
+    "seed": 42,
+    "windows": 100,
+    "window_size": 10000,
+    "start_window": 41,
+    "duration": 60,
+    "intensity": 0.2,
+    "sha256": "b27ef96e7453ba1333122f115bcbf6600fa2632c5aa1a11397ce3c16617811a2"
+  },
+  {
+    "file": "data\\degraded\\gradual_degradation_qrng.csv",
+    "label": "SIMULATED DATA",
+    "fault": "Gradual degradation",
+    "seed": 42,
+    "windows": 100,
+    "window_size": 10000,
+    "start_window": 41,
+    "duration": 60,
+    "intensity": 0.2,
+    "sha256": "8c531565b8cbf105c181638ce18e0f9513d233424acd2b1ae917a9f0802ad2c9"
+  },
+  {
+    "file": "data\\failures\\sudden_failure_qrng.csv",
+    "label": "SIMULATED DATA",
+    "fault": "Sudden failure",
+    "seed": 42,
+    "windows": 100,
+    "window_size": 10000,
+    "start_window": 41,
+    "duration": 60,
+    "intensity": 0.2,
+    "sha256": "5d61842849be0a0fd1b2cfab8ae4186d74d7d23e49fc656131be4e7d5b213f7c"
+  },
+  {
+    "file": "data\\degraded\\mixed_failure_qrng.csv",
+    "label": "SIMULATED DATA",
+    "fault": "Mixed failure",
+    "seed": 42,
+    "windows": 100,
+    "window_size": 10000,
+    "start_window": 41,
+    "duration": 60,
+    "intensity": 0.2,
+    "sha256": "684a11c12d873eba7d520743978ccff0d57a3e57c2c448a5c6a5eae7babe9a39"
+  }
+]
