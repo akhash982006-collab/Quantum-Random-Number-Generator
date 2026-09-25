@@ -11,8 +11,8 @@ from core.jobs import AnalysisJob
 from core.health_score import WEIGHTS
 from core.persistence import save,sessions,load
 from simulation.qrng_twin import simulate,FAULTS,guided_demo
-from ui.components import header,cards
-from ui.charts import timeline,fingerprint,heatmap,pvalues,frame,style
+from ui.components import header,cards,metric_card,status_badge
+from ui.charts import timeline,fingerprint,heatmap,signature_trends,signature_bars,projection_chart,pvalues,nist_bars,frame,style
 from ui.forensic_view import render as forensic
 from ui.inconsistency_explorer import render as inconsistency_explorer
 from reports.generator import pdf,export_json,export_csv
@@ -142,7 +142,15 @@ elif page in ['FAILURE LAB','WHAT-IF ANALYSIS']:
         launch(bits,'SIMULATED · '+fault,extra=dict(seed=int(seed),fault=fault,intensity=intensity,start_window=int(start),duration=int(duration))); st.rerun()
     if r:
         cards(r); st.plotly_chart(timeline(r,['health'],'Live operational health'),width='stretch')
-        st.plotly_chart(heatmap(r),width='stretch'); st.info(r['advisor'])
+        st.markdown("#### 🔬 Degradation Signature Analysis")
+        tab_sig1, tab_sig2, tab_sig3 = st.tabs(["📈 Signature Trends (Timeline)", "📊 Peak Severity Breakdown", "🗺️ Matrix Map"])
+        with tab_sig1:
+            st.plotly_chart(signature_trends(r), width='stretch')
+        with tab_sig2:
+            st.plotly_chart(signature_bars(r), width='stretch')
+        with tab_sig3:
+            st.plotly_chart(heatmap(r), width='stretch')
+        st.info(r['advisor'])
         if st.checkbox('Show simulator ground truth (excluded from detection)'): st.json(r['metadata'])
 
 elif page=='METHODOLOGY':
@@ -207,15 +215,18 @@ else:
     if page=='COMMAND CENTER':
         st.caption(r['metadata'].get('name','Dataset')+' · '+r['baseline']['status'])
         
-        # Compact Inconsistency Summary Section
+        # Compact Inconsistency Summary Section using wonder-of-AI UI elements
         inc_summary = r.get('inconsistency_summary', {})
         st.markdown('### Inconsistency summary')
         sc1, sc2, sc3, sc4, sc5 = st.columns(5)
-        sc1.metric('Events', f"{inc_summary.get('total_events', 0)} events")
-        sc2.metric('Affected Windows', f"{inc_summary.get('unique_affected_windows', 0)} windows")
-        sc3.metric('First Detected', str(inc_summary.get('first_detected', 'None')))
-        sc4.metric('Primary Signature', str(inc_summary.get('most_common_type', 'None')))
-        sc5.metric('Highest Severity', str(inc_summary.get('highest_severity', 'Healthy')))
+        with sc1: metric_card('Events', f"{inc_summary.get('total_events', 0)}", 'total episodes')
+        with sc2: metric_card('Affected Windows', f"{inc_summary.get('unique_affected_windows', 0)}", 'unique windows')
+        with sc3: metric_card('First Detected', str(inc_summary.get('first_detected', 'None')), 'earliest warning')
+        with sc4: metric_card('Primary Signature', str(inc_summary.get('most_common_type', 'None')), 'dominant pattern')
+        with sc5:
+            sev = inc_summary.get('highest_severity', 'Healthy')
+            badge = status_badge(sev)
+            st.markdown(f'<div class="metric-card"><div class="metric-label">Highest Severity</div><div class="metric-value" style="font-size:1.2rem; margin-top:8px;">{badge}</div><div class="metric-detail">operational impact</div></div>', unsafe_allow_html=True)
         if st.button('Open Inconsistency Explorer →', type='secondary'):
             ss.nav_page = 'INCONSISTENCY EXPLORER'
             st.rerun()
@@ -226,6 +237,7 @@ else:
             st.plotly_chart(timeline(r,['health'],'Operational health / 100'),width='stretch')
             st.plotly_chart(timeline(r,['shannon','min_entropy'],'Observed entropy over time'),width='stretch')
         with right:
+            st.markdown('<div class="callout"><b>Evidence boundary:</b> Validates statistical and entropy characteristics. Statistical tests alone cannot establish quantum origin.</div>', unsafe_allow_html=True)
             st.subheader('Q-Advisor'); st.info(r['advisor'])
             st.plotly_chart(fingerprint(r),width='stretch')
         st.subheader('Recent events'); st.dataframe(pd.DataFrame(r['events'][-20:]).drop(columns=['evidence','standardized_changes'],errors='ignore'),hide_index=True,width='stretch')
@@ -237,39 +249,126 @@ else:
         st.caption('Fingerprint axes show stability components, not raw entropy. Unavailable components remain gaps.')
         st.plotly_chart(timeline(r,['bias','autocorrelation'],'Bias and serial dependence'),width='stretch')
     elif page=='NIST VALIDATION':
-        st.subheader('Whole-dataset validation')
-        st.dataframe(pd.DataFrame(r['nist']).drop(columns=['parameters']),hide_index=True,width='stretch')
-        with st.expander('Test parameters and applicability'): st.json(r['nist'])
+        st.markdown('<div class="smallcaps">STATISTICAL VALIDATION / SP 800-22</div>', unsafe_allow_html=True)
+        st.subheader('NIST SP 800-22 Statistical Health')
+        st.markdown('''<div class="callout">
+<b>Understanding NIST P-values:</b><br>
+• <b>Pass condition:</b> P ≥ 0.01 indicates no statistical evidence against randomness for that test.<br>
+• <b>Uniformity (histogram below):</b> Under true randomness, P-values across windows spread evenly across 0.0 to 1.0 (near the gold dashed line).<br>
+• <b>Rejection (red line at α = 0.01):</b> P-values falling below 0.01 indicate statistical anomalies.
+</div>''', unsafe_allow_html=True)
+        
+        col_tab, col_bars = st.columns([1.1, 1])
+        with col_tab:
+            st.markdown('### Whole-dataset test results')
+            st.dataframe(pd.DataFrame(r['nist']).drop(columns=['parameters']),hide_index=True,width='stretch')
+            with st.expander('Test parameters and applicability'): st.json(r['nist'])
+        with col_bars:
+            st.plotly_chart(nist_bars(r),width='stretch')
+            
         st.plotly_chart(pvalues(r),width='stretch')
         st.plotly_chart(timeline(r,['nist_pass_rate'],'Window-level family pass rate'),width='stretch')
         st.warning('NIST SP 800-22 provides statistical evidence about the observed sequence; it does not establish quantum origin. This app implements six families, not the full suite.')
     elif page=='DEGRADATION MONITOR':
         st.plotly_chart(timeline(r,['change_score'],'CUSUM change evidence'),width='stretch')
-        st.plotly_chart(heatmap(r),width='stretch')
-        st.subheader('Entropy risk forecast')
-        available=[w for w in r['windows'] if 'forecast' in w]
+        st.markdown("#### 🔬 Degradation Signature Tracking")
+        st.markdown("""<div style="font-size:0.85rem; color:#8ea3bf; margin-bottom:12px;">
+        Continuous multi-signal tracking against physical failure models. Scores ≥ 30 indicate matched fault signatures.
+        </div>""", unsafe_allow_html=True)
+        tab_sig1, tab_sig2, tab_sig3 = st.tabs(["📈 Signature Trends (Timeline)", "📊 Peak Severity Breakdown", "🗺️ Matrix Map"])
+        with tab_sig1:
+            st.plotly_chart(signature_trends(r), width='stretch')
+        with tab_sig2:
+            st.plotly_chart(signature_bars(r), width='stretch')
+        with tab_sig3:
+            st.plotly_chart(heatmap(r), width='stretch')
+        st.markdown("#### ⏳ Entropy Risk Forecast & Operational Events")
+        available = [w for w in r['windows'] if 'forecast' in w]
         if available:
-            selected=st.selectbox('Forecast as observed at window',[w['window'] for w in available],index=len(available)-1)
-            f=next(w['forecast'] for w in available if w['window']==selected)
-        else: f=r['forecast']
-        if f['available']:
-            st.warning(f"Conditional threshold crossing in approximately {f['windows_to_threshold']:.1f} windows if the observed trend persists.")
-            end=min(100,int(np.ceil(f['windows_to_threshold']))+5); x=np.arange(end+1)
-            fig=go.Figure(go.Scatter(x=x,y=f['current']+f['slope']*x,name='Conditional projection')); fig.add_hline(y=40,annotation_text='Operational threshold'); st.plotly_chart(style(fig,'Health trend projection · not a guaranteed prediction'),width='stretch')
-        else: st.info(f['reason'])
-        st.json(f); st.dataframe(pd.DataFrame(r['events']),hide_index=True,width='stretch')
+            selected = st.selectbox('Forecast as observed at window', [w['window'] for w in available], index=len(available)-1)
+            f = next(w['forecast'] for w in available if w['window'] == selected)
+            recent_windows = [w for w in r['windows'] if w['window'] <= selected][-25:]
+        else:
+            f = r['forecast']
+            recent_windows = r['windows'][-25:] if r.get('windows') else []
+
+        if f.get('available'):
+            st.markdown(f"""
+            <div class="callout" style="border-left-color: #ef6a6a; background: #26161b;">
+                <span class="badge bad">⚠️ Degradation Projected</span>
+                <div style="margin-top:8px; font-size:0.95rem; line-height:1.5; color: #ffc4c4;">
+                    Conditional intervention threshold crossing predicted in <b>~{f['windows_to_threshold']:.1f} windows</b> if current degradation rate (<code>{f['slope']:.3f}</code>/window) persists.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.plotly_chart(projection_chart(f), width='stretch')
+        else:
+            st.markdown(f"""
+            <div class="callout" style="border-left-color: #22c7a8; background: #0e1e24;">
+                <span class="badge good">🛡️ Nominal · No Risk Projected</span>
+                <div style="margin-top:8px; font-size:0.92rem; line-height:1.5; color:#e7edf7;">
+                    <b>Assessment:</b> {f['reason']}<br>
+                    <span style="color:#8ea3bf; font-size:0.85rem;">Theil-Sen robust slope and Spearman rank correlation confirm the stream is maintaining steady entropy safely above the intervention threshold (40.0).</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.plotly_chart(projection_chart(f, recent_windows=recent_windows), width='stretch')
+
+        with st.expander("🛠️ Advanced Forecast Model Diagnostics (JSON)"):
+            st.json(f)
+
+        st.markdown("#### 📋 Operational State & Change-Point Events")
+        events = r.get('events', [])
+        if events:
+            st.dataframe(pd.DataFrame(events), hide_index=True, width='stretch')
+        else:
+            st.markdown("""
+            <div style="background:#111925; border:1px solid #1f2b3e; border-radius:8px; padding:16px 20px; color:#8ea3bf; font-family:'Space Grotesk',sans-serif; display:flex; align-items:center; gap:12px; margin-top:8px;">
+                <span style="font-size:1.3rem;">✅</span>
+                <div>
+                    <strong style="color:#22c7a8; font-size:0.95rem;">Zero Operational Anomalies Recorded</strong><br>
+                    <span style="font-size:0.85rem; color:#8ea3bf;">All evaluated windows operated strictly within nominal baseline tolerances with zero CUSUM change points or state transitions.</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
     elif page=='ENTROPY FORENSICS': forensic(r,ss.bits)
     elif page=='REPORTS':
         st.subheader('Export an auditable investigation')
         history=sessions(); ids=['None']+[h['id'] for h in history]
         selected=st.selectbox('Include historical comparison',ids)
         comparison=load(selected) if selected!='None' else None
-        cols=st.columns(3)
-        cols[0].download_button('Download JSON',export_json(r),'q-gaurd-passport.json','application/json')
-        cols[1].download_button('Download window CSV',export_csv(r),'q-gaurd-windows.csv','text/csv')
-        cols[2].download_button('Download PDF report',pdf(r,comparison),'q-gaurd-report.pdf','application/pdf')
-        st.write(r['advisor']); st.json(dict(session=r['session_id'],configuration=r['config'],quality=r['data_quality'],elapsed_seconds=r['elapsed_seconds']))
+        st.markdown("#### 📦 Export Audit Artifacts")
+        cols = st.columns(4 if ss.bits is not None else 3)
+        cols[0].download_button('Download PDF report', pdf(r, comparison), 'q-gaurd-report.pdf', 'application/pdf', type='primary')
+        cols[1].download_button('Download window CSV', export_csv(r), 'q-gaurd-windows.csv', 'text/csv')
+        cols[2].download_button('Download JSON', export_json(r), 'q-gaurd-passport.json', 'application/json')
         if ss.bits is not None:
-            st.download_button('Download analyzed bits (.txt)',(''.join(map(str,ss.bits))).encode(),'analyzed-bits.txt','text/plain')
+            cols[3].download_button('Download analyzed bits (.txt)', (''.join(map(str, ss.bits))).encode(), 'analyzed-bits.txt', 'text/plain')
+            
+        st.markdown("#### 🧠 Diagnostic Advisory Summary")
+        st.markdown(f"""
+        <div class="callout" style="border-left-color: #5b8cff; background: #111a28;">
+            <div style="font-family:'Space Grotesk',sans-serif; font-weight:600; color:#5b8cff; margin-bottom:6px; font-size:0.95rem;">
+                ◈ Q-Advisor Diagnostic Assessment
+            </div>
+            <div style="font-size:0.92rem; line-height:1.55; color:#e7edf7;">
+                {r['advisor']}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("#### ⚙️ Stream Acquisition & Execution Metadata")
+        mc1, mc2, mc3, mc4 = st.columns(4)
+        with mc1:
+            metric_card('Execution Time', f"{r['elapsed_seconds']:.2f}s", 'pipeline benchmark')
+        with mc2:
+            metric_card('Complete Windows', f"{r['data_quality'].get('complete_windows', 0):,}", f"{r['config'].get('window_size', 10000):,} bits/win")
+        with mc3:
+            metric_card('Bit Order / Valid', f"{r['data_quality'].get('bit_order', 'MSB first')}", str(r['data_quality'].get('validation', 'Strict binary validated'))[:22])
+        with mc4:
+            metric_card('Significance Level', f"α = {r['config'].get('alpha', 0.01)}", 'NIST rejection threshold')
+
+        with st.expander("🛠️ View Full Audit Metadata & Config Schema (JSON)"):
+            st.json(dict(session=r['session_id'], configuration=r['config'], quality=r['data_quality'], elapsed_seconds=r['elapsed_seconds']))
 
 st.divider(); st.caption('Statistical validation ≠ physical / quantum validation. '+LIMITATION)

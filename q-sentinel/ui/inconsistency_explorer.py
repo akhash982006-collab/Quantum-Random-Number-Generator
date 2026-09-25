@@ -4,8 +4,10 @@ import pandas as pd
 import streamlit as st
 
 from core.inconsistencies import get_short_explanation
+from ui.components import metric_card, status_badge
 
 def render(result, bits=None):
+    st.markdown('<div class="smallcaps">ANOMALY INVESTIGATION / FORENSICS</div>', unsafe_allow_html=True)
     st.subheader('Inconsistency Explorer')
     st.caption('Focused event-level and bit-level forensic view of detected anomalies.')
     
@@ -14,16 +16,32 @@ def render(result, bits=None):
     w_size = result['config']['window_size']
     rows = result.get('windows', [])
     
-    # 1. Summary Cards
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric('TOTAL EVENTS', str(summary.get('total_events', len(inconsistencies))))
-    c2.metric('AFFECTED WINDOWS', str(summary.get('unique_affected_windows', 0)))
-    c3.metric('FLAGGED RANGES', str(summary.get('flagged_ranges_count', 0)))
-    c4.metric('FIRST DETECTED', str(summary.get('first_detected', 'None')))
-    c5.metric('PRIMARY TYPE', str(summary.get('most_common_type', 'None')))
-    c6.metric('HIGHEST SEVERITY', str(summary.get('highest_severity', 'Healthy')))
+    # 1. Summary Cards using wonder-of-AI metric_card
+    cols = st.columns(6)
+    cards_data = [
+        ('TOTAL EVENTS', str(summary.get('total_events', len(inconsistencies))), 'detected episodes'),
+        ('AFFECTED WINDOWS', str(summary.get('unique_affected_windows', 0)), 'window count'),
+        ('FLAGGED RANGES', str(summary.get('flagged_ranges_count', 0)), 'localized regions'),
+        ('FIRST DETECTED', str(summary.get('first_detected', 'None')), 'initial warning'),
+        ('PRIMARY TYPE', str(summary.get('most_common_type', 'None')), 'dominant pattern'),
+        ('HIGHEST SEVERITY', str(summary.get('highest_severity', 'Healthy')), 'operational impact')
+    ]
+    for col, (lbl, val, det) in zip(cols, cards_data):
+        with col:
+            if lbl == 'HIGHEST SEVERITY' and val != 'Healthy':
+                badge_html = status_badge(val)
+                st.markdown(
+                    f'<div class="metric-card">'
+                    f'<div class="metric-label">{lbl}</div>'
+                    f'<div class="metric-value" style="font-size:1.2rem; margin-top:8px;">{badge_html}</div>'
+                    f'<div class="metric-detail">{det}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+            else:
+                metric_card(lbl, val, det)
     
-    st.divider()
+    st.markdown('<br>', unsafe_allow_html=True)
     
     # 2. Inconsistency Events Table (if events exist)
     if inconsistencies:
@@ -95,14 +113,30 @@ def render(result, bits=None):
     # 4. Clear Window Title
     st.markdown(f"### Window {sel_win} | Bits {slice_start:,}–{slice_end - 1:,}")
     
-    # 5. Compact Evidence Row
-    ev1, ev2, ev3, ev4 = st.columns(4)
-    ev1.metric('Bias', f"{win_row.get('bias', 0.0):+.4f}")
-    ev2.metric('Entropy', f"{win_row.get('shannon', 1.0):.3f}")
+    # 5. Compact Evidence Row using wonder-of-AI metric cards
+    ev_cols = st.columns(4)
     runs_status = next((t['status'] for t in win_row.get('tests', []) if t.get('name') == 'Runs'), 'PASS')
-    ev3.metric('Runs test', runs_status)
     thresh = result.get('calibration', {}).get('threshold', 0.0)
-    ev4.metric('CUSUM', f"{win_row.get('change_score', 0.0):.3f} / threshold {thresh:.3f}")
+    ev_items = [
+        ('BIAS', f"{win_row.get('bias', 0.0):+.4f}", 'deviation from 0.5'),
+        ('ENTROPY', f"{win_row.get('shannon', 1.0):.3f}", 'marginal bits/bit'),
+        ('RUNS TEST', runs_status, 'NIST SP 800-22'),
+        ('CUSUM', f"{win_row.get('change_score', 0.0):.3f}", f"threshold {thresh:.3f}")
+    ]
+    for col, (lbl, val, det) in zip(ev_cols, ev_items):
+        with col:
+            if lbl == 'RUNS TEST':
+                badge_html = status_badge(val)
+                st.markdown(
+                    f'<div class="metric-card">'
+                    f'<div class="metric-label">{lbl}</div>'
+                    f'<div class="metric-value" style="font-size:1.2rem; margin-top:8px;">{badge_html}</div>'
+                    f'<div class="metric-detail">{det}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+            else:
+                metric_card(lbl, val, det)
     
     # 6. Small Legend
     st.markdown('''
