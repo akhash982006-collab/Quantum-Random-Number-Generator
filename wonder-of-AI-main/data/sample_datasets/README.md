@@ -1,0 +1,1 @@
+Sample datasets are generated transparently by the Simulation Lab using fixed seeds. The app labels all generated data as SIMULATED and never presents it as quantum-origin data. Use the download controls in the app to export the currently analyzed stream as CSV.
